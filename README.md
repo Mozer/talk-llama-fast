@@ -17,6 +17,10 @@ based on talk-llama https://github.com/ggerganov/whisper.cpp
 - xTTSv2 server in streaming-mode
 - langchain google-serper
 
+## News
+- 2024.02.25 - I added `--vad-start-thold` param for tuning stop on speech detection (0.000270: default, 0 to turn off). VAD checks current noise level, if it is loud - xtts and llama stops. Turn it up if you are in a noisy room, also check `--print-energy`.
+- 2024.02.22 - initial public release
+
 
 ## Requirements
 - Windows 10/11 x64
@@ -24,10 +28,6 @@ based on talk-llama https://github.com/ggerganov/whisper.cpp
 - nvidia 3060 12 GB vram, but i guess you can try with 8 GB. Also you can try to use CPU instead of GPU, but it will be slow (you need to build cpu version yourself).
 - For AMD, macos, linux, android - first you need to compile everything. I don't know if it works. 
 - Android version is TODO.
-
-## News
-- 2024.02.25 - I added `--vad-start-thold` param for tuning stop on speech detection (0.000270: default, 0 to turn off). VAD checks current noise level, if it is loud - xtts and llama stops. Turn it up if you are in a noisy room, also check `--print-energy`.
-- 2024.02.22 - initial public release
 
 ## Installation
 ### For Windows 10/11 x64 with CUDA
