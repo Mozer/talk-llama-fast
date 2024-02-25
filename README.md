@@ -26,8 +26,8 @@ based on talk-llama https://github.com/ggerganov/whisper.cpp
 - Android version is TODO.
 
 ## News
-- 2024.02.25 I added --vad-start-thold param for custom stop on speech detection (default is 0.000270, 0 to turn off). VAD checks current noise level, if it is loud - xtts and llama stops. Turn it up if you are in a noisy room, check --print-energy.
-- 2024.02.22 initial public release
+- 2024.02.25 - I added `--vad-start-thold` param for custom stop on speech detection (0.000270: default, 0 to turn off). VAD checks current noise level, if it is loud - xtts and llama stops. Turn it up if you are in a noisy room, also check `--print-energy`.
+- 2024.02.22 - initial public release
 
 ## Installation
 ### For Windows 10/11 x64 with CUDA
