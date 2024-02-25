@@ -25,6 +25,10 @@ based on talk-llama https://github.com/ggerganov/whisper.cpp
 - For AMD, macos, linux, android - first you need to compile everything. I don't know if it works. 
 - Android version is TODO.
 
+## News
+- 2024.02.25 I added --vad-start-thold param for custom stop on speech detection (default is 0.000270, 0 to turn off). VAD checks current noise level, if it is loud - xtts and llama stops. Turn it up if you are in a noisy room, check --print-energy.
+- 2024.02.22 initial public release
+
 ## Installation
 ### For Windows 10/11 x64 with CUDA
 - Download anywhere all files from the latest release (Releases section is on the right)
@@ -89,7 +93,8 @@ del build\bin\Release\talk-llama.exe & cmake.exe --build build --config release
   -mt N,    --max-tokens N   [32     ] maximum number of tokens per audio chunk
   -ac N,    --audio-ctx N    [0      ] audio context size (0 - all)
   -ngl N,   --n-gpu-layers N [999    ] number of layers to store in VRAM
-  -vth N,   --vad-thold N    [0.60   ] voice activity detection threshold
+  -vth N,   --vad-thold N    [0.60   ] voice avg activity detection threshold
+  -vths N,  --vad-start-thold N [0.000270] vad min level to stop tts, 0: off, 0.000270: default
   -vlm N,   --vad-last-ms N  [0      ] vad min silence after speech, ms
   -fth N,   --freq-thold N   [100.00 ] high-pass frequency cutoff
   -su,      --speed-up       [false  ] speed up audio by x2 (reduced accuracy)
