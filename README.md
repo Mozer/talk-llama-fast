@@ -122,7 +122,8 @@ del build\bin\Release\talk-llama.exe & cmake.exe --build build --config release
   --repeat_penalty N         [1.10   ] repeat_penalty
   --xtts-voice NAME          [emma_1 ] xtts voice without .wav
   --xtts-url TEXT            [http://localhost:8020/] xtts/silero server URL, with trailing slash
-  --xtts-control-path FNAME  [c:\DATA\LLM\xtts\xtts_play_allowed.txt] path to xtts_play_allowed.txt  --google-url TEXT          [http://localhost:8003/] langchain google-serper server URL, with /
+  --xtts-control-path FNAME  [c:\DATA\LLM\xtts\xtts_play_allowed.txt] path to xtts_play_allowed.txt  
+  --google-url TEXT          [http://localhost:8003/] langchain google-serper server URL, with /
 ```
 
 ## Voice commands:
