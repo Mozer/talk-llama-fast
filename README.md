@@ -27,12 +27,13 @@ English demo video, v0.1.3: https://www.youtube.com/watch?v=ORDfSG4ltD4
 - wav2lip
 
 ## News
+- [2024.06.26] v0.1.8. Added `--min_p 0.00` sampler param. I recommend to set it 0.10 for Russian.
 - [2024.05.25] Created telegram bot with multiple characters: https://t.me/talkllama And added donation page: https://github.com/Mozer/donate
 - [2024.05.17] Added `talk-llama-fast-v0.1.7_no_avx2.zip` for old CPUs without AVX2 instructions (e.g. Intel i5-2500K). Use it if main version crashes without an error.
 - [2024.05.09] v0.1.7. Added `--push-to-talk` option: hold "Alt" key to speak (useful with loudspeakers without headphones). And now you can use Cyrillic letters in bat files. Save them using Cyrillic "OEM 866" encoding, notepad++ supports it.
 - [2024.04.30] v0.1.6. Big fix: start prompt was not working correctly.
 - [2024.04.25] v0.1.5. Added keyboard input, hotkeys.
-- [2024.04.17] v0.1.4. Added `--batch-size` (takes 0.6 GB less VRAM then it was before!), `--verbose` (to show speed). Start prompt is now not limited in length. But keep it < ctx_size for speed.
+- [2024.04.17] v0.1.4. Added `--batch-size` (llama takes 0.6 GB less VRAM then it was before!), `--verbose` (to show speed). Start prompt is now not limited in length. But keep it < ctx_size for speed.
 - [2024.04.04] v0.1.0. Added streaming wav2lip. With super low latency: from user speech to video it's just 1.5 seconds! Had to rewrite sillyTavern-extras, wav2lip, xtts-api-server, tts (all forked to my github). Streaming wav2lip can be used in SillyTavern. Setup guide and video are coming in a next few days. 
 - [2024.03.09] v0.0.4. New params: `--stop-words` (list for llama separated by semicolon: `;`), `--min-tokens` (min tokens to output), `--split-after` (split first sentence after N tokens for xtts), `--seqrep` (detect loops: 20 symbols in 300 last symbols), `--xtts-intro` (echo random Umm/Well/...  to xtts right after user input). See [0.0.4](https://github.com/Mozer/talk-llama-fast/releases/tag/0.0.4) release for details.
 - [2024.02.28] v0.0.3 `--multi-chars` param to enable different voice for each character, each one will be sent to xtts, so make sure that you have corresponding .wav files (e.g. alisa.wav). Use with voice command `Call NAME`. Video, in Russian: https://youtu.be/JOoVdHZNCcE or https://t.me/tensorbanana/876
@@ -215,6 +216,7 @@ for old CPU's without AVX2: cmake.exe -DWHISPER_NO_AVX2=1 -DWHISPER_SDL2=ON -DWH
   --temp N                   [0.90   ] Temperature
   --top_k N                  [40.00  ] top_k
   --top_p N                  [1.00   ] top_p
+  --min_p N                  [0.00   ] min_p
   --repeat_penalty N         [1.10   ] repeat_penalty
   --repeat_last_n N          [256    ] repeat_last_n
   --xtts-voice NAME          [emma_1 ] xtts voice without .wav
