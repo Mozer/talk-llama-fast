@@ -136,6 +136,7 @@ struct whisper_params {
     float temp = 0.9;      
     float top_k = 40;      
     float top_p = 1.0f;      
+    float min_p = 0.0f;      
     float repeat_penalty = 1.10;   
     int repeat_last_n = 256;
 };
@@ -182,6 +183,7 @@ bool whisper_params_parse(int argc, const char ** argv, whisper_params & params)
         else if (arg == "--temp")     						 { params.temp           = std::stof(argv[++i]); }
         else if (arg == "--top_k")     						 { params.top_k          = std::stof(argv[++i]); }
         else if (arg == "--top_p")     						 { params.top_p          = std::stof(argv[++i]); }
+        else if (arg == "--min_p")     						 { params.min_p          = std::stof(argv[++i]); }
         else if (arg == "--repeat_penalty")     			 { params.repeat_penalty = std::stof(argv[++i]); }
         else if (arg == "--repeat_last_n")     			     { params.repeat_last_n  = std::stoi(argv[++i]); }
         else if (arg == "--xtts-voice")                      { params.xtts_voice     = argv[++i]; }
@@ -256,6 +258,7 @@ void whisper_print_usage(int /*argc*/, const char ** argv, const whisper_params 
     fprintf(stderr, "  --temp N                   [%-7.2f] Temperature \n",                              params.temp);
     fprintf(stderr, "  --top_k N                  [%-7.2f] top_k \n",                                    params.top_k);
     fprintf(stderr, "  --top_p N                  [%-7.2f] top_p \n",                                    params.top_p);
+    fprintf(stderr, "  --min_p N                  [%-7.2f] min_p \n",                                    params.min_p);
     fprintf(stderr, "  --repeat_penalty N         [%-7.2f] repeat_penalty \n",                           params.repeat_penalty);
     fprintf(stderr, "  --repeat_last_n N          [%-7d] repeat_last_n \n",                              params.repeat_last_n);
     fprintf(stderr, "  --xtts-voice NAME          [%-7s] xtts voice without .wav\n",                     params.xtts_voice.c_str());
@@ -1939,6 +1942,7 @@ int run(int argc, const char ** argv) {
                         // out of user input, sample next token
                         const float top_k          = params.top_k;
                         const float top_p          = params.top_p;
+                        const float min_p          = params.min_p;
                         float temp                 = params.temp;                       
                         const float repeat_penalty = params.repeat_penalty;
                         const int repeat_last_n    = params.repeat_last_n; // 256
@@ -1984,6 +1988,7 @@ int run(int argc, const char ** argv) {
                                 // Temperature sampling
                                 llama_sample_top_k(ctx_llama, &candidates_p, top_k, 1);
                                 llama_sample_top_p(ctx_llama, &candidates_p, top_p, 1);
+                                llama_sample_min_p(ctx_llama, &candidates_p, min_p, 1);
                                 llama_sample_temp (ctx_llama, &candidates_p, temp);
                                 id = llama_sample_token(ctx_llama, &candidates_p);
                             }
