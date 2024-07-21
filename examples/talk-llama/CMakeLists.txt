@@ -4,6 +4,10 @@ if (WHISPER_SDL2)
     add_executable(${TARGET} talk-llama.cpp llama.cpp unicode.cpp unicode-data.cpp)
     target_include_directories(${TARGET} PRIVATE ${SDL2_INCLUDE_DIRS})
 
+	set(CMAKE_TOOLCHAIN_FILE "path/to/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
+	find_package (CURL REQUIRED)
+	include_directories(${CURL_INCLUDE_DIRS})
+	
     if (WHISPER_CLBLAST)
         set(CLBLAST_LIBNAME clblast)
     endif ()

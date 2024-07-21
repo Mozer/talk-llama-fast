@@ -92,6 +92,7 @@ extern "C" {
         LLAMA_VOCAB_PRE_TYPE_CHATGLM4       = 17,
         LLAMA_VOCAB_PRE_TYPE_VIKING         = 18,
         LLAMA_VOCAB_PRE_TYPE_JAIS           = 19,
+		LLAMA_VOCAB_PRE_TYPE_TEKKEN         = 20,
     };
 
     // note: these values should be synchronized with ggml_rope
@@ -208,6 +209,29 @@ extern "C" {
 
     typedef bool (*llama_progress_callback)(float progress, void * user_data);
 
+	// OLD
+	// Run the llama inference to obtain the logits and probabilities for the next token(s).
+    // tokens + n_tokens is the provided batch of new tokens to process
+    // n_past is the number of tokens to use from previous eval calls
+    // Returns 0 on success
+    // DEPRECATED: use llama_decode() instead
+    LLAMA_API DEPRECATED(int llama_eval(
+            struct llama_context * ctx,
+                     llama_token * tokens,
+                         int32_t   n_tokens,
+                         int32_t   n_past),
+            "use llama_decode() instead");
+
+    // Same as llama_eval, but use float matrix input directly.
+    // DEPRECATED: use llama_decode() instead
+    LLAMA_API DEPRECATED(int llama_eval_embd(
+            struct llama_context * ctx,
+                           float * embd,
+                         int32_t   n_tokens,
+                         int32_t   n_past),
+            "use llama_decode() instead");
+			
+			
     // Input data for llama_decode
     // A llama_batch object can contain input about one or many sequences
     // The provided arrays (i.e. token, embd, pos, etc.) must have size of n_tokens
