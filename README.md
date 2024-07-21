@@ -27,7 +27,7 @@ English demo video, v0.1.3: https://www.youtube.com/watch?v=ORDfSG4ltD4
 - wav2lip
 
 ## News
-- [2024.07.21] v0.2.0. Added support for gemma-2 and mistral-nemo. Added multiple gpu (`--main-gpu 0`, `--split-mode none`, `--tensor-split 0.5,0.5`). Added `--instruct-preset gemma`. More details in [release](https://github.com/Mozer/talk-llama-fast/releases/tag/0.2.0).
+- [2024.07.21] v0.2.0. Added support for `gemma-2` and `mistral-nemo`. Added multiple gpu (`--main-gpu 0`, `--split-mode none`, `--tensor-split 0.5,0.5`). Added `--instruct-preset gemma`. More details in [release](https://github.com/Mozer/talk-llama-fast/releases/tag/0.2.0).
 - [2024.07.21] update of upstream llama.cpp/whisper up to this [commit](https://github.com/ggerganov/whisper.cpp/commit/d207c6882247984689091ae9d780d2e51eab1df7)
 - [2024.06.26] v0.1.8. Added `--min_p 0.00` sampler param. I recommend to set it 0.10 for Russian.
 - [2024.05.25] Created telegram bot with multiple characters: https://t.me/talkllama And added donation page: https://github.com/Mozer/donate
