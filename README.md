@@ -1,679 +1,284 @@
-# whisper.cpp
+# talk-llama-fast
 
-![whisper.cpp](https://user-images.githubusercontent.com/1991296/235238348-05d0f6a4-da44-4900-a1de-d0707e75b763.jpeg)
+based on talk-llama https://github.com/ggerganov/whisper.cpp
 
-[![Actions Status](https://github.com/ggerganov/whisper.cpp/workflows/CI/badge.svg)](https://github.com/ggerganov/whisper.cpp/actions)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Conan Center](https://shields.io/conan/v/whisper-cpp)](https://conan.io/center/whisper-cpp)
-[![npm](https://img.shields.io/npm/v/whisper.cpp.svg)](https://www.npmjs.com/package/whisper.cpp/)
+Видео-инструкция на русском (Russian guide, English subs): https://youtu.be/0MEZ84uH4-E
 
-> [!NOTE]
-> New maintenance roadmap: https://github.com/ggerganov/whisper.cpp/discussions/2788
+English demo video, v0.1.3: https://www.youtube.com/watch?v=ORDfSG4ltD4
 
-Stable: [v1.7.4](https://github.com/ggerganov/whisper.cpp/releases/tag/v1.7.4) / [Roadmap | F.A.Q.](https://github.com/ggerganov/whisper.cpp/discussions/126)
+Видео на русском, v0.1.0: https://youtu.be/ciyEsZpzbM8
 
-High-performance inference of [OpenAI's Whisper](https://github.com/openai/whisper) automatic speech recognition (ASR) model:
 
-- Plain C/C++ implementation without dependencies
-- Apple Silicon first-class citizen - optimized via ARM NEON, Accelerate framework, Metal and [Core ML](#core-ml-support)
-- AVX intrinsics support for x86 architectures
-- [VSX intrinsics support for POWER architectures](#power-vsx-intrinsics)
-- Mixed F16 / F32 precision
-- [Integer quantization support](#quantization)
-- Zero memory allocations at runtime
-- [Vulkan support](#vulkan-gpu-support)
-- Support for CPU-only inference
-- [Efficient GPU support for NVIDIA](#nvidia-gpu-support)
-- [OpenVINO Support](#openvino-support)
-- [Ascend NPU Support](#ascend-npu-support)
-- [C-style API](https://github.com/ggerganov/whisper.cpp/blob/master/include/whisper.h)
+ТГ: https://t.me/tensorbanana
 
-Supported platforms:
+## I added:
+- XTTSv2 support
+- UTF8 and Russian
+- Speed-ups: streaming for generation, streaming for xtts, aggresive VAD
+- voice commands: Google, stop, regenerate, delete, reset, call
+- generation/tts interruption when user is speaking
+- wav2lip streaming
 
-- [x] Mac OS (Intel and Arm)
-- [x] [iOS](examples/whisper.objc)
-- [x] [Android](examples/whisper.android)
-- [x] [Java](bindings/java/README.md)
-- [x] Linux / [FreeBSD](https://github.com/ggerganov/whisper.cpp/issues/56#issuecomment-1350920264)
-- [x] [WebAssembly](examples/whisper.wasm)
-- [x] Windows ([MSVC](https://github.com/ggerganov/whisper.cpp/blob/master/.github/workflows/build.yml#L117-L144) and [MinGW](https://github.com/ggerganov/whisper.cpp/issues/168)]
-- [x] [Raspberry Pi](https://github.com/ggerganov/whisper.cpp/discussions/166)
-- [x] [Docker](https://github.com/ggerganov/whisper.cpp/pkgs/container/whisper.cpp)
+## I used: 
+- whisper.cpp ggml-medium-q5_0.bin
+- mistral-7b-instruct-v0.2.Q5_0.gguf
+- XTTSv2 server in streaming-mode
+- langchain google-serper
+- wav2lip
 
-The entire high-level implementation of the model is contained in [whisper.h](include/whisper.h) and [whisper.cpp](src/whisper.cpp).
-The rest of the code is part of the [`ggml`](https://github.com/ggerganov/ggml) machine learning library.
+## News
+- [2025.03.24] v0.2.1. Support for `gemma-3` and `mistral-small-2503`, text inference. Image input is coming next! Synced codebase to recent llama.cpp.
+- [2024.07.21] v0.2.0. Support for `gemma-2` and `mistral-nemo`. Added multiple gpu (`--main-gpu 0`, `--split-mode none`, `--tensor-split 0.5,0.5`). Added `--instruct-preset gemma`. More details in [release](https://github.com/Mozer/talk-llama-fast/releases/tag/0.2.0).
+- [2024.07.21] update of upstream llama.cpp/whisper up to this [commit](https://github.com/ggerganov/whisper.cpp/commit/d207c6882247984689091ae9d780d2e51eab1df7)
+- [2024.06.26] v0.1.8. Added `--min_p 0.00` sampler param. I recommend to set it 0.10 for Russian.
+- [2024.05.25] Created telegram bot with multiple characters: https://t.me/talkllama And added donation page: https://github.com/Mozer/donate
+- [2024.05.17] Added `talk-llama-fast-v0.1.7_no_avx2.zip` for old CPUs without AVX2 instructions (e.g. Intel i5-2500K). Use it if main version crashes without an error.
+- [2024.05.09] v0.1.7. Added `--push-to-talk` option: hold "Alt" key to speak (useful with loudspeakers without headphones). And now you can use Cyrillic letters in bat files. Save them using Cyrillic "OEM 866" encoding, notepad++ supports it.
+- [2024.04.30] v0.1.6. Big fix: start prompt was not working correctly.
+- [2024.04.25] v0.1.5. Added keyboard input, hotkeys.
+- [2024.04.17] v0.1.4. Added `--batch-size` (llama takes 0.6 GB less VRAM then it was before!), `--verbose` (to show speed). Start prompt is now not limited in length. But keep it < ctx_size for speed.
+- [2024.04.04] v0.1.0. Added streaming wav2lip. With super low latency: from user speech to video it's just 1.5 seconds! Had to rewrite sillyTavern-extras, wav2lip, xtts-api-server, tts (all forked to my github). Streaming wav2lip can be used in SillyTavern. Setup guide and video are coming in a next few days. 
+- [2024.03.09] v0.0.4. New params: `--stop-words` (list for llama separated by semicolon: `;`), `--min-tokens` (min tokens to output), `--split-after` (split first sentence after N tokens for xtts), `--seqrep` (detect loops: 20 symbols in 300 last symbols), `--xtts-intro` (echo random Umm/Well/...  to xtts right after user input). See [0.0.4](https://github.com/Mozer/talk-llama-fast/releases/tag/0.0.4) release for details.
+- [2024.02.28] v0.0.3 `--multi-chars` param to enable different voice for each character, each one will be sent to xtts, so make sure that you have corresponding .wav files (e.g. alisa.wav). Use with voice command `Call NAME`. Video, in Russian: https://youtu.be/JOoVdHZNCcE or https://t.me/tensorbanana/876
+- `--translate` param for live en_ru translation. Russian user voice is translated ru->en using whisper. Then Llama output is translated en->ru using the same mistral model, inside the same context, without any speed dropouts, no extra vram is needed. This trick gives more reasoning skills to llama in Russian, but instead gives more grammar mistakes. And more text can fit in the context, because it is stored in English, while the translation is deleted from context right after generation of each sentence. `--allow-newline` param. By default, without it llama will stop generation if it finds a new line symbol.
+- [2024.02.25] I added `--vad-start-thold` param for tuning stop on speech detection (default: 0.000270; 0 to turn off). VAD checks current noise level, if it is loud - xtts and llama stops. Turn it up if you are in a noisy room, also check `--print-energy`.
+- [2024.02.22] initial public release
 
-Having such a lightweight implementation of the model allows to easily integrate it in different platforms and applications.
-As an example, here is a video of running the model on an iPhone 13 device - fully offline, on-device: [whisper.objc](examples/whisper.objc)
+## Notes
+- llama.cpp context shifting is working great by default. I used 2048 ctx and tested dialog up to 10000 tokens - the model is still sane, no severe loops or serious problems. Llama remembers everything from a start prompt and from the last 2048 of context, but everything in the middle - is lost. No extra VRAM is used, you can have almost an endless talk without speed dropout.
+- default settings are tuned for extreme low latency. If llama is interrupting you: set `--vad-last-ms 500` instead of 200 ms. If you don't like a little pause after xtts first words set `--split-after 0` instead of 5 - it will turn off first sentence splitting but it will be a little slower for the first sentence to be vocalized. 
+- wav2lip is trained on small videos - recommended: 300x400 25 fps 1 minute long. Big resolution vids can cause vram out of memory errors.
+- wav2lip is not trained for anime, lips will look like human, and some faces are not detected at all.
+- If wav2lip often skips 2nd+ parts of video while audio is playing fine, in xtts-wav2lip.bat try changing to `--wav-chunk-sizes 20,40,100,200,300,400,9999` or even 100,200,300,400,9999 to make wav splitting less aggressive. You can also tune +- `--sleep-before-xtts 1000` in talk-llama-wav2lip.bat - it is the sleep time in ms for llama after sending each xtts request.
+- in xtts_wav2lip.bat don't set `--extras-url` as http://localhost:5100/, put it as `http://127.0.0.1:5100/`. localhost option was slower by 2 seconds in my case, not sure why.
+- if you are using bluetooth headphones and audio is lagging after video you can tune this lag: in `SillyTavern-extras\modules\wav2lip\server_wav2lip.py` in play_video_with_audio at line 367 set `sync_audio_delta_bytes = 5000`.
+- wav2lip video is played on the same device as the host. Currently it can't be run on a remote server like google colab. Mobile phones are also not supported ATM.
+- wav2lip can be used with original SillyTavern (just xtts+wav2lip, no speech-to-text, no voice interruption). No extra extensions required, just follow installation process.
+- VRAM usage: mistral-7B-q5_0 + whisper-medium-q5_0.bin: 7.5 GB, xtts: 2.7 GB, wav2lip: 0.8 GB = Total of 11.0 GB. If you have just 8 GB: use smaller quant of llama!; try using --lowvram with xtts or even start xtts on cpu instead of gpu (`-d=cpu` but it is slow). Try to turn off streaming in xtts: set streaming chunk size as a single number in xtts_wav2lip.bat (--wav-chunk-sizes 9999). It will be slower, but less overhead for multiple small requests.
+- to use with speakers (not headphones):
+1. You can turn off the interruption of bot speech by noise `--vad_start_thold 0`.
+2. Optional: there is a command for “awakening” `--wake-command "Anna,"` (a comma after the name is required). Now, only those phrases that begin with the name "Anna" will go into the chat on your behalf. This will partially help when working with speakers or in a noisy room.
 
-https://user-images.githubusercontent.com/1991296/197385372-962a6dea-bca1-4d50-bf96-1d8c27b98c81.mp4
+## Languages
+Whisper STT supported languages: Afrikaans, Arabic, Armenian, Azerbaijani, Belarusian, Bosnian, Bulgarian, Catalan, Chinese, Croatian, Czech, Danish, Dutch, English, Estonian, Finnish, French, Galician, German, Greek, Hebrew, Hindi, Hungarian, Icelandic, Indonesian, Italian, Japanese, Kannada, Kazakh, Korean, Latvian, Lithuanian, Macedonian, Malay, Marathi, Maori, Nepali, Norwegian, Persian, Polish, Portuguese, Romanian, Russian, Serbian, Slovak, Slovenian, Spanish, Swahili, Swedish, Tagalog, Tamil, Thai, Turkish, Ukrainian, Urdu, Vietnamese, and Welsh.
 
-You can also easily make your own offline voice assistant application: [command](examples/command)
+XTTSv2 supported languages: English (en), Spanish (es), French (fr), German (de), Italian (it), Portuguese (pt), Polish (pl), Turkish (tr), Russian (ru), Dutch (nl), Czech (cs), Arabic (ar), Chinese (zh-cn), Japanese (ja), Hungarian (hu), Korean (ko), Hindi (hi).
 
-https://user-images.githubusercontent.com/1991296/204038393-2f846eae-c255-4099-a76d-5735c25c49da.mp4
+Mistral officially supports: English, French, Italian, German, Spanish. But it can also speak some other languages, but not so fluent (e.g. Russian is not officially supported, but it is there).
 
-On Apple Silicon, the inference runs fully on the GPU via Metal:
+## Requirements
+- Windows 10/11 x64
+- python, cuda
+- 16 GB RAM
+- Recommended: nvidia GPU with 12 GB vram. Minimum: nvidia with 6 GB. For 6GB or 8GB vram see [tweaks](https://github.com/Mozer/talk-llama-fast?tab=readme-ov-file#tweaks-for-6-and-8-gb-vram)
+- For AMD, macos, linux, android - first you need to compile everything. I don't know if it works. 
+- Android version is TODO.
 
-https://github.com/ggerganov/whisper.cpp/assets/1991296/c82e8f86-60dc-49f2-b048-d2fdbd6b5225
+## Installation
+### For Windows 10/11 x64 with CUDA.
+- Check that you have Cuda Toolkit 11.x. If not - install: https://developer.nvidia.com/cuda-11-8-0-download-archive
+- Download latest [release](https://github.com/Mozer/talk-llama-fast/releases) in zip. Extract it's contents.
+- Download whisper medium model to folder with talk-llama.exe: [for English](https://huggingface.co/ggerganov/whisper.cpp/blob/main/ggml-medium.en-q5_0.bin) or [for Russian](https://huggingface.co/ggerganov/whisper.cpp/blob/main/ggml-medium-q5_0.bin) (or even [large-v3-q4_0.bin](https://huggingface.co/Ftfyhh/whisper-ggml-q4_0-models/blob/main/whisper-ggml-large-v3-q4_0.bin) it is larger but much better for Russian). You can try small-q5 if you don't have much VRAM. For English try [distilled medium](https://huggingface.co/distil-whisper/distil-medium.en/blob/main/ggml-medium-32-2.en.bin), it takes 100 MB less VRAM.
+- Download LLM to same folder [mistral-7b-instruct-v0.2.Q5_0](https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF/blob/main/mistral-7b-instruct-v0.2.Q5_0.gguf) or [Vikhr-7B-0.4 for Russian](https://huggingface.co/Vikhrmodels/Vikhr-7B-instruct_0.4-GGUF/resolve/main/vikhr-7b-instruct_0.4.Q5_0.gguf). You can try q4_K_S or q3 if you don't have much VRAM.
+- Now let's install my modified sillyTavern-extras, wav2lip, xtts-api-server, tts (all from my github). Note: xtts-api-server conflicts with SillyTavern-Extras (xtts deepspeed needs torch 2.1 but some package in extras (torchvision 0.17.2) needs torch 2.2). Before that i was able to run them both in 3.11, but users reported several problems trying to install xtts-api-server together with SillyTavern-Extras without conda. So now we will install everything with 2 different conda environments with different torches (7 GB for each conda, i know it is big). It has 2 parts: for xtts and for SillyTavern-Extras. If you know how to install everything in 1 conda environment step by step - open a PR.
 
-## Quick start
+install [miniconda](https://docs.anaconda.com/free/miniconda/). During installation make sure to check "Add Miniconda3 to my PATH environment variable" - it's important.
 
-First clone the repository:
+Open \xtts\ folder where you extracted talk-llama-fast-v0.1.3.zip. In this folder open a `cmd` and run line by line:
+```
+conda create -n xtts
+conda activate xtts
+conda install python=3.11
+conda install git
 
-```bash
-git clone https://github.com/ggerganov/whisper.cpp.git
+pip install git+https://github.com/Mozer/xtts-api-server pydub
+pip install torch==2.1.1+cu118 torchaudio==2.1.1+cu118 --index-url https://download.pytorch.org/whl/cu118
+pip install git+https://github.com/Mozer/tts
+conda deactivate
+```
+- if there are some errors with xtts-api-server installation, check manuals (not my xtts, they install original xtts, not modified): [xtts-api-server](https://github.com/daswer123/xtts-api-server?tab=readme-ov-file#installation) or another manual (didn't work for me) [from sillytavern](https://docs.sillytavern.app/extras/extensions/xtts/) or this [stackoverflow TTS install manual](https://stackoverflow.com/questions/66726331/how-can-i-run-mozilla-tts-coqui-tts-training-with-cuda-on-a-windows-system), but it uses some different versions.
+I remember that when I first installed xtts-api-server it asked to install some full version of [visual-cpp-build-tools](https://visualstudio.microsoft.com/ru/visual-cpp-build-tools/). The default download page from MS wasn't working for me, so i had to google and found it elsewher. [VS_BuildTools.exe screenshot 1](https://github.com/Mozer/talk-llama-fast/assets/1599013/23627998-28f7-4eeb-9bc5-be54c1a68217), [screenshot 2](https://github.com/Mozer/talk-llama-fast/assets/1599013/b7ff8401-c5b3-4f5c-abdb-e527f296b12d). Or maybe it was [VC_redist.x86.exe](https://learn.microsoft.com/ru-ru/cpp/windows/latest-supported-vc-redist?view=msvc-170).
+
+- In the same dir where you are now, create second conda for extras
+```
+conda create -n extras
+conda activate extras
+conda install python=3.11
+conda install git
+
+git clone https://github.com/Mozer/SillyTavern-Extras
+cd SillyTavern-extras
+pip install -r requirements.txt
+cd modules
+git clone https://github.com/Mozer/wav2lip
+cd wav2lip
+pip install -r requirements.txt
+conda deactivate
 ```
 
-Navigate into the directory:
+- Notice: that \wav2lip\ was installed inside \SillyTavern-extras\modules\ folder. That's important.
+- Edit xtts_wav2lip.bat, change `--output` from c:\\DATA\\LLM\\SillyTavern-Extras\\tts_out\\ to actual path where your \\SillyTavern-Extras\\tts_out\\ dir is located. Don't forget the trailing slashes here.
+- Optional: if you have just 6 or 8 GB of vram - in talk-llama-wav2lip.bat find and change to `-ngl 0`. It will move mistral from GPU to CPU+RAM.
+- Optional: edit talk-llama-wav2lip.bat or talk-llama-wav2lip-ru.bat, make sure it has correct LLM and whisper model names that you downloaded. (Full params description is below).
+- Download [ffmpeg full](https://www.gyan.dev/ffmpeg/builds/), put into your PATH environment (how to: https://phoenixnap.com/kb/ffmpeg-windows). Then download h264 codec .dll of required version from https://github.com/cisco/openh264/releases and put to /system32 or /ffmpeg/bin dir. In my case for Windows 11 it was openh264-1.8.0-win64.dll. Wav2lip will work without this dll but will print an error.
 
+
+## Running
+- In /SillyTavern-extras/ double click `silly_extras.bat`. Wait until it downloads wav2lip checkpoint and makes face detection for new video if needed.
+- In /xtts/ double click `xtts_wav2lip.bat` to start xtts server with wav2lip video. OR run xtts_streaming_audio.bat to start xtts server with audio without video. NOTE: On the first run xtts will download DeepSpeed from github. If deepspeed fails to download "Warning: Retyring (Retry... ReadTimoutError...") - turn on VPN to download deepspeed (27MB) and xtts checkpoint (1.8GB), then you can turn it off). Xtts checkpoint can be downloaded without VPN. But if you interrupt download - checkpoint will be broken - you have to manually delete \xtts_models\ dir and restart xtts. 
+- Double click `talk-llama-wav2lip.bat` or `talk-llama-wav2lip-ru.bat` or talk-llama-just-audio.bat. Don't run exe, just bat. NOTE: if you have cyrillic (Russian) letters in .bat - save it in Cyrillic "OEM 866" encoding (notepadd++ supports it).
+- Start speaking. 
+
+### Tweaks for 6 and 8 GB vram
+- use CPU instead of GPU, it will be a bit slower (5-6 s): in talk-llama-wav2lip.bat find and change ngl to `-ngl 0` (mistral has 33 layers, try values from 0 to 33 to find best speed)
+- set smaller context for llama: `--ctx_size 512`
+- set `--lowvram` in xtts_wav2lip.bat, that will move xtts model from GPU to RAM after each xtts request (but it will be slower)
+- set `--wav-chunk-sizes=9999` in xtts_wav2lip.bat it will be a bit slower, but will have less wav2lip requests.
+- try smaller whisper mode, for example [small](https://huggingface.co/ggerganov/whisper.cpp/blob/main/ggml-small-q5_1.bin) or [english distilled medium](https://huggingface.co/distil-whisper/distil-medium.en/blob/main/ggml-medium-32-2.en.bin)
+
+### Optional
+- Put new xtts voices into `\xtts\speakers\`. I recommend  16 bit mono, 22050Hz 10 seconds long wav without noises and music. Use audacity to edit.
+- Put new videos into `\SillyTavern-extras\modules\wav2lip\input\`. I recommend 300x400 25 fps 1 minute long, don't put high res vids, they use A LOT of vram. One video into one folder. Folder name should be the same as desired xtts voice name and a char name in talk-llama-wav2lip.bat. E.g. Anna.wav and \Anna\youtube_ann_300x400.mp4 for character with the name Anna. With `--multi-chars` param talk-llama will pass name of the new character to xtts and wav2lip even if this character is not defined in bat or start prompt. If xtts won't find that voice it will use default voice. If wav2lip won't find that video it will use default video.
+- Put character descrition and some replies to assistant.txt. 
+- Use exact same name for your character and for .wav file and for video folder name. You can also make copies of audio/video files (e.g. Kurt Cobain and Kurt). Now you can address him both ways.
+- For better Russian in XTTS check my finetune: https://huggingface.co/Ftfyhh/xttsv2_banana But it is not for streaming (hallucinates at short replies). Use with default xtts in silly tavern.
+
+#### Optional, better coma handling for xtts - only for xtts audio without wav2lip video
+Better speech, but a little slower for first sentence. Xtts won't split sentences by coma ',':
+c:\Users\[USERNAME]\miniconda3\Lib\site-packages\stream2sentence\stream2sentence.py
+line 191, replace 
+```sentence_delimiters = '.?!;:,\n…)]}。'```
+with
+```sentence_delimiters = '.?!;:\n…)]}。'```
+
+#### Optional, google search plugin
+- download [search_server.py](https://github.com/Mozer/talk-llama-fast/blob/master/search_server.py) from my repo
+- install langchain: `pip install langchain`
+- sign up at https://serper.dev/api-key it is free and fast, it will give you 2500 free searches. Get an API key, paste it to search_server.py at line 13 `os.environ["SERPER_API_KEY"] = "your_key"`
+- start search server by double clicking search_server.py. Now you can use voice commands like these: `Please google who is Barack Obama` or `Пожалуйста погугли погоду в Москве`.
+
+
+## Building, optional
+- for nvidia and Windows. Other systems - try yourself.
+- download https://www.libsdl.org/release/SDL2-devel-2.28.5-VC.zip extract to /whisper.cpp/SDL2/ folder
+- install libcurl using vcpkg:
 ```
-cd whisper.cpp
+git clone https://github.com/Microsoft/vcpkg.git
+cd vcpkg
+./bootstrap-vcpkg.sh
+./vcpkg integrate install
+vcpkg install curl[tool]
 ```
-
-Then, download one of the Whisper [models](models/README.md) converted in [`ggml` format](#ggml-format). For example:
-
-```bash
-sh ./models/download-ggml-model.sh base.en
+- Modify path `c:\\DATA\\Soft\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake` below to folder where you installed vcpkg. Then build.
 ```
+git clone https://github.com/Mozer/talk-llama-fast
+cd talk-llama-fast
+set SDL2_DIR=SDL2\cmake
+cmake.exe -DWHISPER_SDL2=ON -DWHISPER_CUBLAS=0 -DGGML_CUDA=1 -DCMAKE_TOOLCHAIN_FILE="c:\\DATA\\Soft\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake" -B build -DCMAKE_BUILD_PARALLEL_LEVEL=4
+cmake.exe --build build --config release --target clean
+del build\bin\Release\talk-llama.exe & cmake.exe --build build --config release --parallel 4
 
-Now build the [whisper-cli](examples/cli) example and transcribe an audio file like this:
+for old CPU's without AVX2: cmake.exe -DWHISPER_NO_AVX2=1 -DWHISPER_SDL2=ON -DWHISPER_CUBLAS=0 -DGGML_CUDA=1 -DCMAKE_TOOLCHAIN_FILE="c:\\DATA\\Soft\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake" -B build -DCMAKE_BUILD_PARALLEL_LEVEL=4
+then same 2 last lines
 
-```bash
-# build the project
-cmake -B build
-cmake --build build --config Release
-
-# transcribe an audio file
-./build/bin/whisper-cli -f samples/jfk.wav
-```
-
----
-
-For a quick demo, simply run `make base.en`.
-
-The command downloads the `base.en` model converted to custom `ggml` format and runs the inference on all `.wav` samples in the folder `samples`.
-
-For detailed usage instructions, run: `./build/bin/whisper-cli -h`
-
-Note that the [whisper-cli](examples/cli) example currently runs only with 16-bit WAV files, so make sure to convert your input before running the tool.
-For example, you can use `ffmpeg` like this:
-
-```bash
-ffmpeg -i input.mp3 -ar 16000 -ac 1 -c:a pcm_s16le output.wav
-```
-
-## More audio samples
-
-If you want some extra audio samples to play with, simply run:
-
-```
-make -j samples
-```
-
-This will download a few more audio files from Wikipedia and convert them to 16-bit WAV format via `ffmpeg`.
-
-You can download and run the other models as follows:
-
-```
-make -j tiny.en
-make -j tiny
-make -j base.en
-make -j base
-make -j small.en
-make -j small
-make -j medium.en
-make -j medium
-make -j large-v1
-make -j large-v2
-make -j large-v3
-make -j large-v3-turbo
-```
-
-## Memory usage
-
-| Model  | Disk    | Mem     |
-| ------ | ------- | ------- |
-| tiny   | 75 MiB  | ~273 MB |
-| base   | 142 MiB | ~388 MB |
-| small  | 466 MiB | ~852 MB |
-| medium | 1.5 GiB | ~2.1 GB |
-| large  | 2.9 GiB | ~3.9 GB |
-
-## POWER VSX Intrinsics
-
-`whisper.cpp` supports POWER architectures and includes code which
-significantly speeds operation on Linux running on POWER9/10, making it
-capable of faster-than-realtime transcription on underclocked Raptor
-Talos II. Ensure you have a BLAS package installed, and replace the
-standard cmake setup with:
-
-```bash
-# build with GGML_BLAS defined
-cmake -B build -DGGML_BLAS=1
-cmake --build build --config Release
-./build/bin/whisper-cli [ .. etc .. ]
-
-## Quantization
-
-`whisper.cpp` supports integer quantization of the Whisper `ggml` models.
-Quantized models require less memory and disk space and depending on the hardware can be processed more efficiently.
-
-Here are the steps for creating and using a quantized model:
-
-```bash
-# quantize a model with Q5_0 method
-cmake -B build
-cmake --build build --config Release
-./build/bin/quantize models/ggml-base.en.bin models/ggml-base.en-q5_0.bin q5_0
-
-# run the examples as usual, specifying the quantized model file
-./build/bin/whisper-cli -m models/ggml-base.en-q5_0.bin ./samples/gb0.wav
+compilation can take 30+ minutes.
 ```
 
-## Core ML support
 
-On Apple Silicon devices, the Encoder inference can be executed on the Apple Neural Engine (ANE) via Core ML. This can result in significant
-speed-up - more than x3 faster compared with CPU-only execution. Here are the instructions for generating a Core ML model and using it with `whisper.cpp`:
-
-- Install Python dependencies needed for the creation of the Core ML model:
-
-  ```bash
-  pip install ane_transformers
-  pip install openai-whisper
-  pip install coremltools
-  ```
-
-  - To ensure `coremltools` operates correctly, please confirm that [Xcode](https://developer.apple.com/xcode/) is installed and execute `xcode-select --install` to install the command-line tools.
-  - Python 3.10 is recommended.
-  - MacOS Sonoma (version 14) or newer is recommended, as older versions of MacOS might experience issues with transcription hallucination.
-  - [OPTIONAL] It is recommended to utilize a Python version management system, such as [Miniconda](https://docs.conda.io/en/latest/miniconda.html) for this step:
-    - To create an environment, use: `conda create -n py310-whisper python=3.10 -y`
-    - To activate the environment, use: `conda activate py310-whisper`
-
-- Generate a Core ML model. For example, to generate a `base.en` model, use:
-
-  ```bash
-  ./models/generate-coreml-model.sh base.en
-  ```
-
-  This will generate the folder `models/ggml-base.en-encoder.mlmodelc`
-
-- Build `whisper.cpp` with Core ML support:
-
-  ```bash
-  # using CMake
-  cmake -B build -DWHISPER_COREML=1
-  cmake --build build -j --config Release
-  ```
-
-- Run the examples as usual. For example:
-
-  ```text
-  $ ./build/bin/whisper-cli -m models/ggml-base.en.bin -f samples/jfk.wav
-
-  ...
-
-  whisper_init_state: loading Core ML model from 'models/ggml-base.en-encoder.mlmodelc'
-  whisper_init_state: first run on a device may take a while ...
-  whisper_init_state: Core ML model loaded
-
-  system_info: n_threads = 4 / 10 | AVX = 0 | AVX2 = 0 | AVX512 = 0 | FMA = 0 | NEON = 1 | ARM_FMA = 1 | F16C = 0 | FP16_VA = 1 | WASM_SIMD = 0 | BLAS = 1 | SSE3 = 0 | VSX = 0 | COREML = 1 |
-
-  ...
-  ```
-
-  The first run on a device is slow, since the ANE service compiles the Core ML model to some device-specific format.
-  Next runs are faster.
-
-For more information about the Core ML implementation please refer to PR [#566](https://github.com/ggerganov/whisper.cpp/pull/566).
-
-## OpenVINO support
-
-On platforms that support [OpenVINO](https://github.com/openvinotoolkit/openvino), the Encoder inference can be executed
-on OpenVINO-supported devices including x86 CPUs and Intel GPUs (integrated & discrete).
-
-This can result in significant speedup in encoder performance. Here are the instructions for generating the OpenVINO model and using it with `whisper.cpp`:
-
-- First, setup python virtual env. and install python dependencies. Python 3.10 is recommended.
-
-  Windows:
-
-  ```powershell
-  cd models
-  python -m venv openvino_conv_env
-  openvino_conv_env\Scripts\activate
-  python -m pip install --upgrade pip
-  pip install -r requirements-openvino.txt
-  ```
-
-  Linux and macOS:
-
-  ```bash
-  cd models
-  python3 -m venv openvino_conv_env
-  source openvino_conv_env/bin/activate
-  python -m pip install --upgrade pip
-  pip install -r requirements-openvino.txt
-  ```
-
-- Generate an OpenVINO encoder model. For example, to generate a `base.en` model, use:
-
-  ```
-  python convert-whisper-to-openvino.py --model base.en
-  ```
-
-  This will produce ggml-base.en-encoder-openvino.xml/.bin IR model files. It's recommended to relocate these to the same folder as `ggml` models, as that
-  is the default location that the OpenVINO extension will search at runtime.
-
-- Build `whisper.cpp` with OpenVINO support:
-
-  Download OpenVINO package from [release page](https://github.com/openvinotoolkit/openvino/releases). The recommended version to use is [2023.0.0](https://github.com/openvinotoolkit/openvino/releases/tag/2023.0.0).
-
-  After downloading & extracting package onto your development system, set up required environment by sourcing setupvars script. For example:
-
-  Linux:
-
-  ```bash
-  source /path/to/l_openvino_toolkit_ubuntu22_2023.0.0.10926.b4452d56304_x86_64/setupvars.sh
-  ```
-
-  Windows (cmd):
-
-  ```powershell
-  C:\Path\To\w_openvino_toolkit_windows_2023.0.0.10926.b4452d56304_x86_64\setupvars.bat
-  ```
-
-  And then build the project using cmake:
-
-  ```bash
-  cmake -B build -DWHISPER_OPENVINO=1
-  cmake --build build -j --config Release
-  ```
-
-- Run the examples as usual. For example:
-
-  ```text
-  $ ./build/bin/whisper-cli -m models/ggml-base.en.bin -f samples/jfk.wav
-
-  ...
-
-  whisper_ctx_init_openvino_encoder: loading OpenVINO model from 'models/ggml-base.en-encoder-openvino.xml'
-  whisper_ctx_init_openvino_encoder: first run on a device may take a while ...
-  whisper_openvino_init: path_model = models/ggml-base.en-encoder-openvino.xml, device = GPU, cache_dir = models/ggml-base.en-encoder-openvino-cache
-  whisper_ctx_init_openvino_encoder: OpenVINO model loaded
-
-  system_info: n_threads = 4 / 8 | AVX = 1 | AVX2 = 1 | AVX512 = 0 | FMA = 1 | NEON = 0 | ARM_FMA = 0 | F16C = 1 | FP16_VA = 0 | WASM_SIMD = 0 | BLAS = 0 | SSE3 = 1 | VSX = 0 | COREML = 0 | OPENVINO = 1 |
-
-  ...
-  ```
-
-  The first time run on an OpenVINO device is slow, since the OpenVINO framework will compile the IR (Intermediate Representation) model to a device-specific 'blob'. This device-specific blob will get
-  cached for the next run.
-
-For more information about the OpenVINO implementation please refer to PR [#1037](https://github.com/ggerganov/whisper.cpp/pull/1037).
-
-## NVIDIA GPU support
-
-With NVIDIA cards the processing of the models is done efficiently on the GPU via cuBLAS and custom CUDA kernels.
-First, make sure you have installed `cuda`: https://developer.nvidia.com/cuda-downloads
-
-Now build `whisper.cpp` with CUDA support:
-
+## talk-llama.exe params
 ```
-cmake -B build -DGGML_CUDA=1
-cmake --build build -j --config Release
+  -h,       --help           [default] show this help message and exit
+  -t N,     --threads N      [4      ] number of threads to use during computation
+  -vms N,   --voice-ms N     [10000  ] voice duration in milliseconds
+  -c ID,    --capture ID     [-1     ] capture device ID
+  -mt N,    --max-tokens N   [32     ] maximum number of tokens per audio chunk
+  -ac N,    --audio-ctx N    [0      ] audio context size (0 - all)
+  -ngl N,   --n-gpu-layers N [999    ] number of layers to store in VRAM
+  -vth N,   --vad-thold N    [0.60   ] voice avg activity detection threshold
+  -vths N,  --vad-start-thold N [0.000270] vad min level to stop tts, 0: off, 0.000270: default
+  -vlm N,   --vad-last-ms N  [0      ] vad min silence after speech, ms
+  -fth N,   --freq-thold N   [100.00 ] high-pass frequency cutoff
+  -su,      --speed-up       [false  ] speed up audio by x2 (not working)
+  -tr,      --translate      [false  ] translate from source language to english
+  -ps,      --print-special  [false  ] print special tokens
+  -pe,      --print-energy   [false  ] print sound energy (for debugging)
+  --debug                    [false  ] print debug info
+  -vp,      --verbose-prompt [false  ] print prompt at start
+  --verbose                  [false  ] print speed
+  -ng,      --no-gpu         [false  ] disable GPU
+  -p NAME,  --person NAME    [Georgi ] person name (for prompt selection)
+  -bn NAME, --bot-name NAME  [LLaMA  ] bot name (to display)
+  -w TEXT,  --wake-command T [       ] wake-up command to listen for
+  -ho TEXT, --heard-ok TEXT  [       ] said by TTS before generating reply
+  -l LANG,  --language LANG  [en     ] spoken language
+  -mw FILE, --model-whisper  [models/ggml-base.en.bin] whisper model file
+  -ml FILE, --model-llama    [models/ggml-llama-7B.bin] llama model file
+  -s FILE,  --speak TEXT     [./examples/talk-llama/speak] command for TTS
+  --prompt-file FNAME        [       ] file with custom prompt to start dialog
+  --instruct-preset TEXT     [       ] instruct preset to use without .json
+  --session FNAME                   file to cache model state in (may be large!) (default: none)
+  -f FNAME, --file FNAME     [       ] text output file name
+   --ctx_size N              [2048   ] Size of the prompt context
+  -b N,     --batch-size N   [64     ] Size of input batch size
+  -n N,     --n_predict N    [64     ] Max number of tokens to predict
+  --temp N                   [0.90   ] Temperature
+  --top_k N                  [40.00  ] top_k
+  --top_p N                  [1.00   ] top_p
+  --min_p N                  [0.00   ] min_p
+  --repeat_penalty N         [1.10   ] repeat_penalty
+  --repeat_last_n N          [256    ] repeat_last_n
+  --main-gpu N               [0      ] main GPU id, starting from 0
+  --split-mode NAME          [none   ] GPU split mode: 'none' or 'layer'
+  --tensor-split NAME        [(null) ] Tensor split, list of floats: 0.5,0.5
+  --xtts-voice NAME          [emma_1 ] xtts voice without .wav
+  --xtts-url TEXT            [http://localhost:8020/] xtts/silero server URL, with trailing slash
+  --xtts-control-path FNAME  [c:\DATA\LLM\xtts\xtts_play_allowed.txt] not used anymore
+  --xtts-intro               [false  ] xtts instant short random intro like Hmmm.
+  --sleep-before-xtts        [0      ] sleep llama inference before xtts, ms.
+  --google-url TEXT          [http://localhost:8003/] langchain google-serper server URL, with /
+  --allow-newline            [false  ] allow new line in llama output
+  --multi-chars              [false  ] xtts will use same wav name as in llama output
+  --push-to-talk             [false  ] hold Alt to speak
+  --seqrep                   [false  ] sequence repetition penalty, search last 20 in 300
+  --split-after N            [0      ] split after first n tokens for tts
+  --min-tokens N             [0      ] min new tokens to output
+  --stop-words TEXT          [       ] llama stop w: separated by ;
 ```
 
-## Vulkan GPU support
-Cross-vendor solution which allows you to accelerate workload on your GPU.
-First, make sure your graphics card driver provides support for Vulkan API.
-
-Now build `whisper.cpp` with Vulkan support:
-```
-cmake -B build -DGGML_VULKAN=1
-cmake --build build -j --config Release
-```
-
-## BLAS CPU support via OpenBLAS
-
-Encoder processing can be accelerated on the CPU via OpenBLAS.
-First, make sure you have installed `openblas`: https://www.openblas.net/
-
-Now build `whisper.cpp` with OpenBLAS support:
-
-```
-cmake -B build -DGGML_BLAS=1
-cmake --build build -j --config Release
-```
-
-## Ascend NPU support
-
-Ascend NPU provides inference acceleration via [`CANN`](https://www.hiascend.com/en/software/cann) and AI cores.
-
-First, check if your Ascend NPU device is supported:
-
-**Verified devices**
-| Ascend NPU                    | Status  |
-|:-----------------------------:|:-------:|
-| Atlas 300T A2                 | Support |
-
-Then, make sure you have installed [`CANN toolkit`](https://www.hiascend.com/en/software/cann/community) . The lasted version of CANN is recommanded.
-
-Now build `whisper.cpp` with CANN support:
-
-```
-cmake -B build -DGGML_CANN=1
-cmake --build build -j --config Release
-```
-
-Run the inference examples as usual, for example:
-
-```
-./build/bin/whisper-cli -f samples/jfk.wav -m models/ggml-base.en.bin -t 8
-```
-
-*Notes:*
-
-- If you have trouble with Ascend NPU device, please create a issue with **[CANN]** prefix/tag.
-- If you run successfully with your Ascend NPU device, please help update the table `Verified devices`.
-
-## Docker
-
-### Prerequisites
-
-- Docker must be installed and running on your system.
-- Create a folder to store big models & intermediate files (ex. /whisper/models)
-
-### Images
-
-We have two Docker images available for this project:
-
-1. `ghcr.io/ggerganov/whisper.cpp:main`: This image includes the main executable file as well as `curl` and `ffmpeg`. (platforms: `linux/amd64`, `linux/arm64`)
-2. `ghcr.io/ggerganov/whisper.cpp:main-cuda`: Same as `main` but compiled with CUDA support. (platforms: `linux/amd64`)
-
-### Usage
-
-```shell
-# download model and persist it in a local folder
-docker run -it --rm \
-  -v path/to/models:/models \
-  whisper.cpp:main "./models/download-ggml-model.sh base /models"
-# transcribe an audio file
-docker run -it --rm \
-  -v path/to/models:/models \
-  -v path/to/audios:/audios \
-  whisper.cpp:main "./main -m /models/ggml-base.bin -f /audios/jfk.wav"
-# transcribe an audio file in samples folder
-docker run -it --rm \
-  -v path/to/models:/models \
-  whisper.cpp:main "./main -m /models/ggml-base.bin -f ./samples/jfk.wav"
-```
-
-## Installing with Conan
-
-You can install pre-built binaries for whisper.cpp or build it from source using [Conan](https://conan.io/). Use the following command:
-
-```
-conan install --requires="whisper-cpp/[*]" --build=missing
-```
-
-For detailed instructions on how to use Conan, please refer to the [Conan documentation](https://docs.conan.io/2/).
-
-## Limitations
-
-- Inference only
-
-## Real-time audio input example
-
-This is a naive example of performing real-time inference on audio from your microphone.
-The [stream](examples/stream) tool samples the audio every half a second and runs the transcription continuously.
-More info is available in [issue #10](https://github.com/ggerganov/whisper.cpp/issues/10).
-
-```bash
-cmake -B build -DWHISPER_SDL2=ON
-cmake --build build --config Release
-./build/bin/whisper-stream -m ./models/ggml-base.en.bin -t 8 --step 500 --length 5000
-```
-
-https://user-images.githubusercontent.com/1991296/194935793-76afede7-cfa8-48d8-a80f-28ba83be7d09.mp4
-
-## Confidence color-coding
-
-Adding the `--print-colors` argument will print the transcribed text using an experimental color coding strategy
-to highlight words with high or low confidence:
-
-```bash
-./build/bin/whisper-cli -m models/ggml-base.en.bin -f samples/gb0.wav --print-colors
-```
-
-<img width="965" alt="image" src="https://user-images.githubusercontent.com/1991296/197356445-311c8643-9397-4e5e-b46e-0b4b4daa2530.png">
-
-## Controlling the length of the generated text segments (experimental)
-
-For example, to limit the line length to a maximum of 16 characters, simply add `-ml 16`:
-
-```text
-$ ./build/bin/whisper-cli -m ./models/ggml-base.en.bin -f ./samples/jfk.wav -ml 16
-
-whisper_model_load: loading model from './models/ggml-base.en.bin'
-...
-system_info: n_threads = 4 / 10 | AVX2 = 0 | AVX512 = 0 | NEON = 1 | FP16_VA = 1 | WASM_SIMD = 0 | BLAS = 1 |
-
-main: processing './samples/jfk.wav' (176000 samples, 11.0 sec), 4 threads, 1 processors, lang = en, task = transcribe, timestamps = 1 ...
-
-[00:00:00.000 --> 00:00:00.850]   And so my
-[00:00:00.850 --> 00:00:01.590]   fellow
-[00:00:01.590 --> 00:00:04.140]   Americans, ask
-[00:00:04.140 --> 00:00:05.660]   not what your
-[00:00:05.660 --> 00:00:06.840]   country can do
-[00:00:06.840 --> 00:00:08.430]   for you, ask
-[00:00:08.430 --> 00:00:09.440]   what you can do
-[00:00:09.440 --> 00:00:10.020]   for your
-[00:00:10.020 --> 00:00:11.000]   country.
-```
-
-## Word-level timestamp (experimental)
-
-The `--max-len` argument can be used to obtain word-level timestamps. Simply use `-ml 1`:
-
-```text
-$ ./build/bin/whisper-cli -m ./models/ggml-base.en.bin -f ./samples/jfk.wav -ml 1
-
-whisper_model_load: loading model from './models/ggml-base.en.bin'
-...
-system_info: n_threads = 4 / 10 | AVX2 = 0 | AVX512 = 0 | NEON = 1 | FP16_VA = 1 | WASM_SIMD = 0 | BLAS = 1 |
-
-main: processing './samples/jfk.wav' (176000 samples, 11.0 sec), 4 threads, 1 processors, lang = en, task = transcribe, timestamps = 1 ...
-
-[00:00:00.000 --> 00:00:00.320]
-[00:00:00.320 --> 00:00:00.370]   And
-[00:00:00.370 --> 00:00:00.690]   so
-[00:00:00.690 --> 00:00:00.850]   my
-[00:00:00.850 --> 00:00:01.590]   fellow
-[00:00:01.590 --> 00:00:02.850]   Americans
-[00:00:02.850 --> 00:00:03.300]  ,
-[00:00:03.300 --> 00:00:04.140]   ask
-[00:00:04.140 --> 00:00:04.990]   not
-[00:00:04.990 --> 00:00:05.410]   what
-[00:00:05.410 --> 00:00:05.660]   your
-[00:00:05.660 --> 00:00:06.260]   country
-[00:00:06.260 --> 00:00:06.600]   can
-[00:00:06.600 --> 00:00:06.840]   do
-[00:00:06.840 --> 00:00:07.010]   for
-[00:00:07.010 --> 00:00:08.170]   you
-[00:00:08.170 --> 00:00:08.190]  ,
-[00:00:08.190 --> 00:00:08.430]   ask
-[00:00:08.430 --> 00:00:08.910]   what
-[00:00:08.910 --> 00:00:09.040]   you
-[00:00:09.040 --> 00:00:09.320]   can
-[00:00:09.320 --> 00:00:09.440]   do
-[00:00:09.440 --> 00:00:09.760]   for
-[00:00:09.760 --> 00:00:10.020]   your
-[00:00:10.020 --> 00:00:10.510]   country
-[00:00:10.510 --> 00:00:11.000]  .
-```
-
-## Speaker segmentation via tinydiarize (experimental)
-
-More information about this approach is available here: https://github.com/ggerganov/whisper.cpp/pull/1058
-
-Sample usage:
-
-```py
-# download a tinydiarize compatible model
-./models/download-ggml-model.sh small.en-tdrz
-
-# run as usual, adding the "-tdrz" command-line argument
-./build/bin/whisper-cli -f ./samples/a13.wav -m ./models/ggml-small.en-tdrz.bin -tdrz
-...
-main: processing './samples/a13.wav' (480000 samples, 30.0 sec), 4 threads, 1 processors, lang = en, task = transcribe, tdrz = 1, timestamps = 1 ...
-...
-[00:00:00.000 --> 00:00:03.800]   Okay Houston, we've had a problem here. [SPEAKER_TURN]
-[00:00:03.800 --> 00:00:06.200]   This is Houston. Say again please. [SPEAKER_TURN]
-[00:00:06.200 --> 00:00:08.260]   Uh Houston we've had a problem.
-[00:00:08.260 --> 00:00:11.320]   We've had a main beam up on a volt. [SPEAKER_TURN]
-[00:00:11.320 --> 00:00:13.820]   Roger main beam interval. [SPEAKER_TURN]
-[00:00:13.820 --> 00:00:15.100]   Uh uh [SPEAKER_TURN]
-[00:00:15.100 --> 00:00:18.020]   So okay stand, by thirteen we're looking at it. [SPEAKER_TURN]
-[00:00:18.020 --> 00:00:25.740]   Okay uh right now uh Houston the uh voltage is uh is looking good um.
-[00:00:27.620 --> 00:00:29.940]   And we had a a pretty large bank or so.
-```
-
-## Karaoke-style movie generation (experimental)
-
-The [whisper-cli](examples/cli) example provides support for output of karaoke-style movies, where the
-currently pronounced word is highlighted. Use the `-wts` argument and run the generated bash script.
-This requires to have `ffmpeg` installed.
-
-Here are a few _"typical"_ examples:
-
-```bash
-./build/bin/whisper-cli -m ./models/ggml-base.en.bin -f ./samples/jfk.wav -owts
-source ./samples/jfk.wav.wts
-ffplay ./samples/jfk.wav.mp4
-```
-
-https://user-images.githubusercontent.com/1991296/199337465-dbee4b5e-9aeb-48a3-b1c6-323ac4db5b2c.mp4
-
----
-
-```bash
-./build/bin/whisper-cli -m ./models/ggml-base.en.bin -f ./samples/mm0.wav -owts
-source ./samples/mm0.wav.wts
-ffplay ./samples/mm0.wav.mp4
-```
-
-https://user-images.githubusercontent.com/1991296/199337504-cc8fd233-0cb7-4920-95f9-4227de3570aa.mp4
-
----
-
-```bash
-./build/bin/whisper-cli -m ./models/ggml-base.en.bin -f ./samples/gb0.wav -owts
-source ./samples/gb0.wav.wts
-ffplay ./samples/gb0.wav.mp4
-```
-
-https://user-images.githubusercontent.com/1991296/199337538-b7b0c7a3-2753-4a88-a0cd-f28a317987ba.mp4
-
----
-
-## Video comparison of different models
-
-Use the [scripts/bench-wts.sh](https://github.com/ggerganov/whisper.cpp/blob/master/scripts/bench-wts.sh) script to generate a video in the following format:
-
-```bash
-./scripts/bench-wts.sh samples/jfk.wav
-ffplay ./samples/jfk.wav.all.mp4
-```
-
-https://user-images.githubusercontent.com/1991296/223206245-2d36d903-cf8e-4f09-8c3b-eb9f9c39d6fc.mp4
-
----
-
-## Benchmarks
-
-In order to have an objective comparison of the performance of the inference across different system configurations,
-use the [whisper-bench](examples/bench) tool. The tool simply runs the Encoder part of the model and prints how much time it
-took to execute it. The results are summarized in the following Github issue:
-
-[Benchmark results](https://github.com/ggerganov/whisper.cpp/issues/89)
-
-Additionally a script to run whisper.cpp with different models and audio files is provided [bench.py](scripts/bench.py).
-
-You can run it with the following command, by default it will run against any standard model in the models folder.
-
-```bash
-python3 scripts/bench.py -f samples/jfk.wav -t 2,4,8 -p 1,2
-```
-
-It is written in python with the intention of being easy to modify and extend for your benchmarking use case.
-
-It outputs a csv file with the results of the benchmarking.
-
-## `ggml` format
-
-The original models are converted to a custom binary format. This allows to pack everything needed into a single file:
-
-- model parameters
-- mel filters
-- vocabulary
-- weights
-
-You can download the converted models using the [models/download-ggml-model.sh](models/download-ggml-model.sh) script
-or manually from here:
-
-- https://huggingface.co/ggerganov/whisper.cpp
-- https://ggml.ggerganov.com
-
-For more details, see the conversion script [models/convert-pt-to-ggml.py](models/convert-pt-to-ggml.py) or [models/README.md](models/README.md).
-
-## [Bindings](https://github.com/ggerganov/whisper.cpp/discussions/categories/bindings)
-
-- [x] Rust: [tazz4843/whisper-rs](https://github.com/tazz4843/whisper-rs) | [#310](https://github.com/ggerganov/whisper.cpp/discussions/310)
-- [x] JavaScript: [bindings/javascript](bindings/javascript) | [#309](https://github.com/ggerganov/whisper.cpp/discussions/309)
-  - React Native (iOS / Android): [whisper.rn](https://github.com/mybigday/whisper.rn)
-- [x] Go: [bindings/go](bindings/go) | [#312](https://github.com/ggerganov/whisper.cpp/discussions/312)
-- [x] Java:
-  - [GiviMAD/whisper-jni](https://github.com/GiviMAD/whisper-jni)
-- [x] Ruby: [bindings/ruby](bindings/ruby) | [#507](https://github.com/ggerganov/whisper.cpp/discussions/507)
-- [x] Objective-C / Swift: [ggerganov/whisper.spm](https://github.com/ggerganov/whisper.spm) | [#313](https://github.com/ggerganov/whisper.cpp/discussions/313)
-  - [exPHAT/SwiftWhisper](https://github.com/exPHAT/SwiftWhisper)
-- [x] .NET: | [#422](https://github.com/ggerganov/whisper.cpp/discussions/422)
-  - [sandrohanea/whisper.net](https://github.com/sandrohanea/whisper.net)
-  - [NickDarvey/whisper](https://github.com/NickDarvey/whisper)
-- [x] Python: | [#9](https://github.com/ggerganov/whisper.cpp/issues/9)
-  - [stlukey/whispercpp.py](https://github.com/stlukey/whispercpp.py) (Cython)
-  - [AIWintermuteAI/whispercpp](https://github.com/AIWintermuteAI/whispercpp) (Updated fork of aarnphm/whispercpp)
-  - [aarnphm/whispercpp](https://github.com/aarnphm/whispercpp) (Pybind11)
-  - [abdeladim-s/pywhispercpp](https://github.com/abdeladim-s/pywhispercpp) (Pybind11)
-- [x] R: [bnosac/audio.whisper](https://github.com/bnosac/audio.whisper)
-- [x] Unity: [macoron/whisper.unity](https://github.com/Macoron/whisper.unity)
-
-## Examples
-
-There are various examples of using the library for different projects in the [examples](examples) folder.
-Some of the examples are even ported to run in the browser using WebAssembly. Check them out!
-
-| Example                                             | Web                                   | Description                                                                                                                     |
-| --------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| [whisper-cli](examples/cli)                         | [whisper.wasm](examples/whisper.wasm) | Tool for translating and transcribing audio using Whisper                                                                       |
-| [whisper-bench](examples/bench)                     | [bench.wasm](examples/bench.wasm)     | Benchmark the performance of Whisper on your machine                                                                            |
-| [whisper-stream](examples/stream)                   | [stream.wasm](examples/stream.wasm)   | Real-time transcription of raw microphone capture                                                                               |
-| [whisper-command](examples/command)                 | [command.wasm](examples/command.wasm) | Basic voice assistant example for receiving voice commands from the mic                                                         |
-| [whisper-server](examples/server)                   |                                       | HTTP transcription server with OAI-like API                                                                                     |
-| [whisper-talk-llama](examples/talk-llama)           |                                       | Talk with a LLaMA bot                                                                                                           |
-| [whisper.objc](examples/whisper.objc)               |                                       | iOS mobile application using whisper.cpp                                                                                        |
-| [whisper.swiftui](examples/whisper.swiftui)         |                                       | SwiftUI iOS / macOS application using whisper.cpp                                                                               |
-| [whisper.android](examples/whisper.android)         |                                       | Android mobile application using whisper.cpp                                                                                    |
-| [whisper.nvim](examples/whisper.nvim)               |                                       | Speech-to-text plugin for Neovim                                                                                                |
-| [generate-karaoke.sh](examples/generate-karaoke.sh) |                                       | Helper script to easily [generate a karaoke video](https://youtu.be/uj7hVta4blM) of raw audio capture                           |
-| [livestream.sh](examples/livestream.sh)             |                                       | [Livestream audio transcription](https://github.com/ggerganov/whisper.cpp/issues/185)                                           |
-| [yt-wsp.sh](examples/yt-wsp.sh)                     |                                       | Download + transcribe and/or translate any VOD [(original)](https://gist.github.com/DaniruKun/96f763ec1a037cc92fe1a059b643b818) |
-| [wchess](examples/wchess)                           | [wchess.wasm](examples/wchess)        | Voice-controlled chess                                                                                                          |
-
-## [Discussions](https://github.com/ggerganov/whisper.cpp/discussions)
-
-If you have any kind of feedback about this project feel free to use the Discussions section and open a new topic.
-You can use the [Show and tell](https://github.com/ggerganov/whisper.cpp/discussions/categories/show-and-tell) category
-to share your own projects that use `whisper.cpp`. If you have a question, make sure to check the
-[Frequently asked questions (#126)](https://github.com/ggerganov/whisper.cpp/discussions/126) discussion.
+## Voice commands:
+Full list of commands and variations is in `talk-llama.cpp`, search `user_command`.
+- Stop (остановись, Ctrl+Space)
+- Regenerate (переделай, , Ctrl+Right) - will regenerate llama answer
+- Delete (удали, Ctrl+Delete) - will delete user question and llama answer.
+- Delete 3 messages (удали 3 сообщениия)
+- Reset (удали все, Ctrl+R) - will delete all context except for a initial prompt
+- Google something (погугли что-то)
+- Сall NAME (позови Алису)
+
+## Known bugs
+- if you have missing cuda .dll errors - see this [issue](https://github.com/Mozer/talk-llama-fast/issues/5)
+- if whisper doesn't hear your voice - see this [issue](https://github.com/Mozer/talk-llama-fast/issues/5)
+- Rope context - is not implemented. Use context shifting (enabled by default).
+- sometimes whisper is hallucinating, need to put hallucinations into stop-words. Check `misheard text` in `talk-llama.cpp`
+- don't put cyrillic (русские) letters for characters or paths in .bat files, they may not work nice because of weird encoding. Copy text from .bat, paste into `cmd` if you need to use cyrillic letters with talk-llama-fast.exe.
+- During first run wav2lip will run face detection with a newly added video. It will take about 30-60 s, but it happens just once and then it is saved to cache. And there is a bug with face detection wich slows down everything (memory leak). You need to restart Silly Tavern Extras after face detection is finished.
+- Sometimes wav2lip video window disappears but audio is still playing fine. If the video window doesn't come back automatically - restart Silly Tavern Extras.
+- if you restart xtts you need to restart silly-tavern-extras. Otherwise wav2lip will start playing wrong segments of already created videos.
+- Sometimes when you type fast the first letter of you message is not printed.
+
+## Licenses
+- talk-llama-fast - MIT License - OK for commercial use
+- whisper.cpp - MIT License - OK for commercial use
+- whisper - MIT License - OK for commercial use
+- TTS(xtts) - Mozilla Public License 2.0 - OK for commercial use
+- xtts-api-server - MIT License - OK for commercial use
+- Silly Extras - GNU Public License v3.0 - OK for commercial use
+- Mistral 7B - Apache 2.0 license - OK for commercial use
+- Wav2Lip - non-commercial - for commercial requests, please contact synclabs.so directly
+
+## Contacts
+Reddit: https://www.reddit.com/user/tensorbanana2
+
+ТГ: https://t.me/tensorbanana
+
+Donate: https://github.com/Mozer/donate
