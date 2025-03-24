@@ -206,6 +206,7 @@ compilation can take 30+ minutes.
   -vp,      --verbose-prompt [false  ] print prompt at start
   --verbose                  [false  ] print speed
   -ng,      --no-gpu         [false  ] disable GPU
+  -fa,      --flash-attn     [false  ] flash attention
   -p NAME,  --person NAME    [Georgi ] person name (for prompt selection)
   -bn NAME, --bot-name NAME  [LLaMA  ] bot name (to display)
   -w TEXT,  --wake-command T [       ] wake-up command to listen for
@@ -214,6 +215,7 @@ compilation can take 30+ minutes.
   -mw FILE, --model-whisper  [models/ggml-base.en.bin] whisper model file
   -ml FILE, --model-llama    [models/ggml-llama-7B.bin] llama model file
   -s FILE,  --speak TEXT     [./examples/talk-llama/speak] command for TTS
+  -sf FILE, --speak-file     [./examples/talk-llama/to_speak.txt] file to pass to TTS
   --prompt-file FNAME        [       ] file with custom prompt to start dialog
   --instruct-preset TEXT     [       ] instruct preset to use without .json
   --session FNAME                   file to cache model state in (may be large!) (default: none)
@@ -227,6 +229,7 @@ compilation can take 30+ minutes.
   --min_p N                  [0.00   ] min_p
   --repeat_penalty N         [1.10   ] repeat_penalty
   --repeat_last_n N          [256    ] repeat_last_n
+  --n_keep N                 [128    ] keep first n_tokens after context_shift
   --main-gpu N               [0      ] main GPU id, starting from 0
   --split-mode NAME          [none   ] GPU split mode: 'none' or 'layer'
   --tensor-split NAME        [(null) ] Tensor split, list of floats: 0.5,0.5
