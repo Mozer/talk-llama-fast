@@ -31,7 +31,7 @@ English demo video, v0.1.3: https://www.youtube.com/watch?v=ORDfSG4ltD4
 - [2024.07.21] v0.2.0. Support for `gemma-2` and `mistral-nemo`. Added multiple gpu (`--main-gpu 0`, `--split-mode none`, `--tensor-split 0.5,0.5`). Added `--instruct-preset gemma`. More details in [release](https://github.com/Mozer/talk-llama-fast/releases/tag/0.2.0).
 - [2024.07.21] update of upstream llama.cpp/whisper up to this [commit](https://github.com/ggerganov/whisper.cpp/commit/d207c6882247984689091ae9d780d2e51eab1df7)
 - [2024.06.26] v0.1.8. Added `--min_p 0.00` sampler param. I recommend to set it 0.10 for Russian.
-- [2024.05.25] Created telegram bot with multiple characters: https://t.me/talkllama And added donation page: https://github.com/Mozer/donate
+- [2024.05.25] Created telegram bot with multiple characters: https://t.me/+m2TQ5VJLhIRiY2U6 And added donation page: https://github.com/Mozer/donate
 - [2024.05.17] Added `talk-llama-fast-v0.1.7_no_avx2.zip` for old CPUs without AVX2 instructions (e.g. Intel i5-2500K). Use it if main version crashes without an error.
 - [2024.05.09] v0.1.7. Added `--push-to-talk` option: hold "Alt" key to speak (useful with loudspeakers without headphones). And now you can use Cyrillic letters in bat files. Save them using Cyrillic "OEM 866" encoding, notepad++ supports it.
 - [2024.04.30] v0.1.6. Big fix: start prompt was not working correctly.
